@@ -7,39 +7,36 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    // Show all products in a Blade view
     public function index()
     {
-        $products = Product::all();
+        $products = Product::where('approved', true)->get();  // Only approved products
         return view('marketplace.products', compact('products'));
     }
 
-    // Store a new product
+    public function create()
+    {
+        return view('shopkeeper.create_product');
+    }
+
     public function store(Request $request)
     {
-        $product = Product::create($request->all());
-        return response()->json($product, 201);
+        $request->validate([
+            'name' => 'required',
+            'description' => 'required',
+            'price' => 'required|numeric',
+            'category' => 'required',
+        ]);
+
+        Product::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'price' => $request->price,
+            'category' => $request->category,
+            'user_id' => auth()->id(),
+        ]);
+
+        return redirect('/products')->with('status', 'Product submitted for approval!');
     }
 
-    // Show a single product
-    public function show($id)
-    {
-        $product = Product::findOrFail($id);
-        return view('marketplace.product_show', compact('product'));
-    }
-
-    // Update a product
-    public function update(Request $request, $id)
-    {
-        $product = Product::findOrFail($id);
-        $product->update($request->all());
-        return response()->json($product);
-    }
-
-    // Delete a product
-    public function destroy($id)
-    {
-        Product::destroy($id);
-        return response()->json(['message' => 'Product deleted']);
-    }
+    // Add other methods (show, edit, update, destroy) as needed
 }

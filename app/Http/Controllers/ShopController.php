@@ -9,41 +9,65 @@ class ShopController extends Controller
 {
     public function index()
     {
-        return Shop::all();
+        $shops = Shop::where('user_id', auth()->id())->get();
+        return view('shopkeeper.shops', compact('shops'));  // No change
     }
 
     public function create()
     {
-        return view('shops.create');
+        return view('shopkeeper.create-shop');  // Changed to hyphen
     }
 
     public function store(Request $request)
     {
-        $shop = Shop::create($request->all());
-        return response()->json($shop, 201);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'address' => 'required|string',
+        ]);
+
+        Shop::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'address' => $request->address,
+            'user_id' => auth()->id(),
+        ]);
+
+        return redirect('/shops')->with('status', 'Shop created successfully!');
     }
 
     public function show($id)
     {
-        return Shop::findOrFail($id);
+        $shop = Shop::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+        return view('shopkeeper.show-shop', compact('shop'));  // Changed to hyphen
     }
 
     public function edit($id)
     {
-        $shop = Shop::findOrFail($id);
-        return view('shops.edit', compact('shop'));
+        $shop = Shop::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+        return view('shopkeeper.edit-shop', compact('shop'));  // Changed to hyphen
     }
 
     public function update(Request $request, $id)
     {
-        $shop = Shop::findOrFail($id);
-        $shop->update($request->all());
-        return response()->json($shop);
+        $shop = Shop::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'address' => 'required|string',
+        ]);
+
+        $shop->update($request->only(['name', 'description', 'address']));
+
+        return redirect('/shops')->with('status', 'Shop updated successfully!');
     }
 
     public function destroy($id)
     {
-        Shop::destroy($id);
-        return response()->json(['message' => 'Shop deleted']);
+        $shop = Shop::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+        $shop->delete();
+
+        return redirect('/shops')->with('status', 'Shop deleted successfully!');
     }
 }

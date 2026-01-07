@@ -43,8 +43,29 @@
         </form>
 
         <ul class="navbar-nav ms-3">
-          <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
-          <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+          @if(Auth::check())
+            <li class="nav-item"><a class="nav-link" href="{{ route('dashboard') }}">Dashboard</a></li>  {{-- Added Dashboard link --}}
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                {{ Auth::user()->name }} ({{ Auth::user()->role }})
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/cart">Cart</a></li>
+                @if(Auth::user()->role == 'shopkeeper')
+                  <li><a class="dropdown-item" href="/products/create">Add Product</a></li>
+                @endif
+                <li>
+                  <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                    @csrf
+                    <button class="dropdown-item" type="submit">Logout</button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          @else
+            <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+            <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+          @endif
         </ul>
       </div>
     </div>
@@ -66,53 +87,53 @@
         <div class="col-md-3">
           <h5 class="footer-title">Sunshine Squad</h5>
           <p class="footer-text">Luxury marketplace for solar, IoT, and smart living.</p>
-          <div class="socials d-flex gap-3">
-            <a href="#" class="social-link">Facebook</a>
-            <a href="#" class="social-link">Instagram</a>
-            <a href="#" class="social-link">Twitter/X</a>
-            <a href="#" class="social-link">LinkedIn</a>
+            <div class="socials d-flex gap-3">
+              <a href="#" class="social-link">Facebook</a>
+              <a href="#" class="social-link">Instagram</a>
+              <a href="#" class="social-link">Twitter/X</a>
+              <a href="#" class="social-link">LinkedIn</a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <h5 class="footer-title">Customer care</h5>
+            <ul class="footer-list">
+              <li><a href="/faq">FAQs</a></li>
+              <li><a href="/returns">Returns & refunds</a></li>
+              <li><a href="/shipping">Shipping & delivery</a></li>
+              <li><a href="/warranty">Warranty & repairs</a></li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <h5 class="footer-title">Legal</h5>
+            <ul class="footer-list">
+              <li><a href="/privacy">Privacy policy</a></li>
+              <li><a href="/terms">Terms of service</a></li>
+              <li><a href="/cookies">Cookie policy</a></li>
+              <li><a href="/security">Security</a></li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <h5 class="footer-title">Contact</h5>
+            <ul class="footer-list">
+              <li>Email: support@sunshine-squad.test</li>
+              <li>Phone: +92 300 0000000</li>
+              <li><a href="/contact" class="btn btn-primary btn-sm mt-2">Contact form</a></li>
+            </ul>
           </div>
         </div>
-        <div class="col-md-3">
-          <h5 class="footer-title">Customer care</h5>
-          <ul class="footer-list">
-            <li><a href="/faq">FAQs</a></li>
-            <li><a href="/returns">Returns & refunds</a></li>
-            <li><a href="/shipping">Shipping & delivery</a></li>
-            <li><a href="/warranty">Warranty & repairs</a></li>
-          </ul>
-        </div>
-        <div class="col-md-3">
-          <h5 class="footer-title">Legal</h5>
-          <ul class="footer-list">
-            <li><a href="/privacy">Privacy policy</a></li>
-            <li><a href="/terms">Terms of service</a></li>
-            <li><a href="/cookies">Cookie policy</a></li>
-            <li><a href="/security">Security</a></li>
-          </ul>
-        </div>
-        <div class="col-md-3">
-          <h5 class="footer-title">Contact</h5>
-          <ul class="footer-list">
-            <li>Email: support@sunshine-squad.test</li>
-            <li>Phone: +92 300 0000000</li>
-            <li><a href="/contact" class="btn btn-primary btn-sm mt-2">Contact form</a></li>
-          </ul>
+        <hr class="footer-sep my-4">
+        <div class="d-flex justify-content-between pb-4">
+          <small class="footer-text">© 2025 Sunshine Squad. All rights reserved.</small>
+          <div class="d-flex gap-3">
+            <a href="/sellers" class="footer-link">Become a seller</a>
+            <a href="/brand-partners" class="footer-link">Brand partners</a>
+            <a href="/affiliate" class="footer-link">Affiliate program</a>
+          </div>
         </div>
       </div>
-      <hr class="footer-sep my-4">
-      <div class="d-flex justify-content-between pb-4">
-        <small class="footer-text">© 2025 Sunshine Squad. All rights reserved.</small>
-        <div class="d-flex gap-3">
-          <a href="/sellers" class="footer-link">Become a seller</a>
-          <a href="/brand-partners" class="footer-link">Brand partners</a>
-          <a href="/affiliate" class="footer-link">Affiliate program</a>
-        </div>
-      </div>
-    </div>
-  </footer>
+    </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  @yield('scripts')
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @yield('scripts')
+  </body>
 </html>

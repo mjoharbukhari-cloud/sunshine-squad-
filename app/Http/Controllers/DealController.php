@@ -9,31 +9,34 @@ class DealController extends Controller
 {
     public function index()
     {
-        $deals = Deal::all();
+        $deals = Deal::where('approved', true)->get();
         return view('marketplace.deals', compact('deals'));
+    }
+
+    public function create()
+    {
+        return view('shopkeeper.create_deal');
     }
 
     public function store(Request $request)
     {
-        $deal = Deal::create($request->all());
-        return response()->json($deal, 201);
-    }
+        $request->validate([
+            'title' => 'required',
+            'description' => 'required',
+            'original_price' => 'required|numeric',
+            'deal_price' => 'required|numeric',
+            'expires_at' => 'required|date',
+        ]);
 
-    public function show($id)
-    {
-        return Deal::findOrFail($id);
-    }
+        Deal::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'original_price' => $request->original_price,
+            'deal_price' => $request->deal_price,
+            'expires_at' => $request->expires_at,
+            'user_id' => auth()->id(),
+        ]);
 
-    public function update(Request $request, $id)
-    {
-        $deal = Deal::findOrFail($id);
-        $deal->update($request->all());
-        return response()->json($deal);
-    }
-
-    public function destroy($id)
-    {
-        Deal::destroy($id);
-        return response()->json(['message' => 'Deal deleted']);
+        return redirect('/deals')->with('status', 'Deal submitted for approval!');
     }
 }

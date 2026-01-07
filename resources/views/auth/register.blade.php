@@ -9,13 +9,13 @@
     {{-- Full name --}}
     <div class="mb-3">
         <label class="form-label">Full name</label>
-        <input type="text" name="name" class="form-control" placeholder="John Doe" required>
+        <input type="text" name="name" class="form-control" placeholder="Muhammad Ali" required>
     </div>
 
     {{-- Email --}}
     <div class="mb-3">
         <label class="form-label">Email</label>
-        <input type="email" name="email" class="form-control" placeholder="john@example.com" required>
+        <input type="email" name="email" class="form-control" placeholder="Asifali@example.com" required>
     </div>
 
     {{-- Password --}}
@@ -40,9 +40,9 @@
     </div>
 
     {{-- Submit --}}
-    <button class="btn btn-gold w-100">Register (demo)</button>
+    <button class="btn btn-gold w-100">Register / SignUp</button>
 
-    <p class="text-muted mt-3 text-center">
+    <p class="text mt-3 text-center">
         Already have an account? <a href="/login">Login</a>
     </p>
 </form>
