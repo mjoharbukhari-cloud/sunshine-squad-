@@ -82,17 +82,42 @@ Route::middleware('auth')->get('/dashboard', function () {
 | CUSTOMER
 |--------------------------------------------------------------------------
 */
+use App\Models\Product;
+use App\Models\Deal;
+use App\Models\Cart;
+
 Route::middleware(['auth', 'role:customer'])->group(function () {
-    Route::view('/customer/dashboard', 'dashboard.customer')->name('customer.dashboard');
+
+    Route::get('/customer/dashboard', function () {
+
+        $products = Product::latest()->take(6)->get();
+
+        $deals = Deal::where('approved',1)
+                    ->latest()
+                    ->take(4)
+                    ->get();
+
+        $cartCount = Cart::where('user_id', auth()->id())->count();
+
+        return view('dashboard.customer', compact(
+            'products',
+            'deals',
+            'cartCount'
+        ));
+
+    })->name('customer.dashboard');
+
 
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+
     Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
+
     Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
 
-    // Buy Now button route
+    // Buy Now
     Route::post('/buy/{id}', [CartController::class, 'buyNow'])->name('checkout.buy');
-});
 
+});
 /*
 |--------------------------------------------------------------------------
 | SHOPKEEPER

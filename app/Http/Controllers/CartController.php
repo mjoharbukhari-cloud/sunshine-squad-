@@ -3,62 +3,93 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Product;
 use App\Models\Cart;
+use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    // Show cart page
+
+    /*
+    |--------------------------------------------------------------------------
+    | Show Cart Page
+    |--------------------------------------------------------------------------
+    */
+
     public function index()
     {
-        $userId = Auth::id();
-        $cartItems = Cart::with('product')->where('user_id', $userId)->get();
-        $total = $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
+        $cartItems = Cart::with('product')
+            ->where('user_id', Auth::id())
+            ->get();
 
-        return view('cart.index', compact('cartItems', 'total'));
+        return view('cart.index', compact('cartItems'));
     }
 
-    // Add product to cart
+
+    /*
+    |--------------------------------------------------------------------------
+    | Add Product To Cart
+    |--------------------------------------------------------------------------
+    */
+
     public function add($id)
     {
-        $userId = Auth::id();
         $product = Product::findOrFail($id);
 
-        $cartItem = Cart::firstOrCreate(
-            ['user_id' => $userId, 'product_id' => $product->id],
-            ['quantity' => 0]
-        );
+        $cart = Cart::where('user_id', Auth::id())
+            ->where('product_id', $id)
+            ->first();
 
-        $cartItem->quantity += 1;
-        $cartItem->save();
+        // If product already in cart increase quantity
+        if ($cart) {
 
-        return redirect()->back()->with('success', '✅ Product added to cart!');
+            $cart->quantity += 1;
+            $cart->save();
+
+        } else {
+
+            Cart::create([
+                'user_id' => Auth::id(),
+                'product_id' => $id,
+                'quantity' => 1
+            ]);
+
+        }
+
+        return redirect()->back()->with('success', 'Product added to cart!');
     }
 
-    // Remove product from cart
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove Product From Cart
+    |--------------------------------------------------------------------------
+    */
+
     public function remove($id)
     {
-        $userId = Auth::id();
-        Cart::where('user_id', $userId)->where('product_id', $id)->delete();
+        $item = Cart::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
 
-        return redirect()->back()->with('success', '🗑️ Product removed from cart!');
+        $item->delete();
+
+        return redirect()->back()->with('success', 'Item removed from cart.');
     }
 
-    // Buy now action
+
+    /*
+    |--------------------------------------------------------------------------
+    | Buy Now (Simple Checkout)
+    |--------------------------------------------------------------------------
+    */
+
     public function buyNow($id)
     {
-        $userId = Auth::id();
         $product = Product::findOrFail($id);
 
-        // For now, simply redirect to cart with only this item
-        Cart::where('user_id', $userId)->delete(); // Clear existing cart
-        Cart::create([
-            'user_id' => $userId,
-            'product_id' => $product->id,
-            'quantity' => 1
-        ]);
-
-        return redirect()->route('cart.index')->with('success', '💳 Ready to checkout!');
+        return redirect()->route('cart.index')
+            ->with('success', 'Proceeding to checkout for: '.$product->name);
     }
+
 }
