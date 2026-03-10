@@ -7,15 +7,15 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('deals', function (Blueprint $table) {
-            $table->boolean('approved')->default(false)->after('id');
+        Schema::table('products', function (Blueprint $table) {
+            $table->string('image')->nullable()->after('description');
         });
     }
 
     public function down(): void
     {
-        Schema::table('deals', function (Blueprint $table) {
-            $table->dropColumn('approved');
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropColumn('image');
         });
     }
 };

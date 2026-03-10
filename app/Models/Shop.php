@@ -13,18 +13,24 @@ class Shop extends Model
         'name',
         'description',
         'address',
-        'user_id',  // Links to the shopkeeper (user)
+        'user_id'
     ];
 
-    // Relationship: A shop belongs to a user (shopkeeper)
-    public function user()
+    // SHOP OWNER
+    public function owner()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Optional: Relationship to products if shops have products
+    // SHOP PRODUCTS
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    // SHOP DEALS
+    public function deals()
+    {
+        return $this->hasMany(Deal::class);
     }
 }

@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-       Schema::create('deals', function (Blueprint $table) {
+      Schema::create('products', function (Blueprint $table) {
     $table->id();
-    $table->string('title');
-    $table->decimal('deal_price', 10, 2);
-    $table->integer('quantity');
+    $table->string('name');
+    $table->decimal('price', 10, 2);
+    $table->string('shop_name'); // simple text
     $table->string('image');
-    $table->text('description');
+    $table->text('description')->nullable();
     $table->timestamps();
 });
 
@@ -21,6 +21,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('deals');
+        Schema::dropIfExists('products');
     }
 };

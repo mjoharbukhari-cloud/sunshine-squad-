@@ -22,25 +22,10 @@
 
 @section('content')
 <div class="card p-3">
-    <h3>Edit Profile</h3>
-    <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <input type="text" class="form-control" name="name" value="{{ Auth::user()->name }}">
-        </div>
-
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" name="email" value="{{ Auth::user()->email }}">
-        </div>
-
-        <div class="mb-3">
-            <label for="avatar" class="form-label">Profile Picture</label>
-            <input type="file" class="form-control" name="avatar">
-        </div>
-
-        <button type="submit" class="btn btn-success">Save Changes</button>
-    </form>
+    <h3>Profile Details</h3>
+    <p><strong>Name:</strong> {{ Auth::user()->name }}</p>
+    <p><strong>Email:</strong> {{ Auth::user()->email }}</p>
+    <p><strong>Role:</strong> {{ Auth::user()->role }}</p>
+    <a href="{{ route('profile.edit') }}" class="btn btn-primary mt-3">Edit Profile</a>
 </div>
 @endsection

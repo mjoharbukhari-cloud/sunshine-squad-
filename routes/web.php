@@ -1,42 +1,57 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ShopController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\DealController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\{
+    HomeController,
+    ProductController,
+    DealController,
+    ShopkeeperController,
+    AdminController,
+    CartController,
+    ProfileController
+};
+use App\Http\Controllers\Auth\{
+    LoginController,
+    RegisterController,
+    ForgotPasswordController,
+    ResetPasswordController
+};
 
-// -------------------------
-// Public Marketplace Pages
-// -------------------------
-Route::get('/', fn() => view('marketplace.home'));
-Route::get('/contact', fn() => view('marketplace.contact'));
+/*
+|--------------------------------------------------------------------------
+| PUBLIC PAGES
+|--------------------------------------------------------------------------
+*/
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::view('/contact', 'marketplace.contact')->name('contact');
 
-// Products & Deals
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/deals', [DealController::class, 'index'])->name('deals.index');
+/*
+|--------------------------------------------------------------------------
+| MARKETPLACE (PUBLIC)
+|--------------------------------------------------------------------------
+*/
+// Products
+Route::get('/products', [ProductController::class, 'index'])->name('marketplace.products');
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('marketplace.products.show');
 
-// Categories
-Route::get('/category/{slug}', fn($slug) => view('marketplace.category', ['slug' => $slug]));
+// Deals
+Route::get('/deals', [DealController::class, 'index'])->name('marketplace.deals');
+Route::get('/deals/{id}', [DealController::class, 'show'])->name('marketplace.deals.show');
 
-// Search
-Route::get('/search', function () {
-    $q = trim(request('q', ''));
-    return view('marketplace.search', ['query' => $q]);
-});
+// Search & Category
+Route::get('/category/{slug}', fn ($slug) =>
+    view('marketplace.category', compact('slug'))
+)->name('category.show');
 
-// Buy page (demo only)
-Route::get('/buy/{id}', fn($id) => view('marketplace.buy', ['id' => $id]));
-Route::post('/buy/{id}', fn($id) => redirect('/')->with('status', 'Order submitted for Product '.$id));
+Route::get('/search', fn () =>
+    view('marketplace.search', ['query' => request('q')])
+)->name('search');
 
-// -------------------------
-// Authentication
-// -------------------------
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATION
+|--------------------------------------------------------------------------
+*/
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -44,86 +59,109 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 
-// -------------------------
-// Password Reset Routes
-// -------------------------
-Route::get('password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-Route::get('password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-Route::post('password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
+Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
 
-// -------------------------
-// Role-specific dashboard
-// -------------------------
-Route::get('/dashboard', function () {
-    $role = auth()->user()->role ?? '';
-    if ($role === 'customer') return view('dashboard.customer');
-    if ($role === 'shopkeeper') return view('dashboard.shopkeeper');
-    if ($role === 'admin') return view('dashboard.admin');
-    return redirect('/');
-})->middleware('auth')->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD REDIRECT
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->get('/dashboard', function () {
+    return match (auth()->user()->role) {
+        'admin'      => redirect()->route('admin.dashboard'),
+        'shopkeeper' => redirect()->route('shopkeeper.dashboard'),
+        default      => redirect()->route('customer.dashboard'),
+    };
+})->name('dashboard');
 
-// -------------------------
-// Footer Pages
-// -------------------------
-Route::get('/privacy', fn() => view('pages.privacy'));
-Route::get('/terms', fn() => view('pages.terms'));
-Route::get('/cookies', fn() => view('pages.cookies'));
-Route::get('/security', fn() => view('pages.security'));
-Route::get('/faq', fn() => view('pages.faq'));
-Route::get('/returns', fn() => view('pages.returns'));
-Route::get('/shipping', fn() => view('pages.shipping'));
-Route::get('/warranty', fn() => view('pages.warranty'));
-Route::get('/sellers', fn() => view('pages.sellers'));
-Route::get('/brand-partners', fn() => view('pages.brand_partners'));
-Route::get('/affiliate', fn() => view('pages.affiliate'));
+/*
+|--------------------------------------------------------------------------
+| CUSTOMER
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:customer'])->group(function () {
+    Route::view('/customer/dashboard', 'dashboard.customer')->name('customer.dashboard');
 
-// -------------------------
-// Cart Routes (only for logged-in users)
-// -------------------------
-Route::middleware(['auth'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
     Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+
+    // Buy Now button route
+    Route::post('/buy/{id}', [CartController::class, 'buyNow'])->name('checkout.buy');
 });
 
-// -------------------------
-// Shopkeeper Routes (CRUD)
-// -------------------------
-Route::middleware(['auth', 'role:shopkeeper'])->group(function () {
-    Route::resource('shops', ShopController::class);
-    Route::resource('products', ProductController::class)->except(['index']);
-    Route::resource('deals', DealController::class)->except(['index']);
+/*
+|--------------------------------------------------------------------------
+| SHOPKEEPER
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:shopkeeper'])
+    ->prefix('shopkeeper')
+    ->name('shopkeeper.')
+    ->group(function () {
+
+    Route::get('/dashboard', [ShopkeeperController::class, 'dashboard'])->name('dashboard');
+
+    // Shop
+    Route::get('/shop/create', [ShopkeeperController::class, 'createShop'])->name('shop.create');
+    Route::post('/shop/store', [ShopkeeperController::class, 'storeShop'])->name('shop.store');
+
+    // Products
+    Route::get('/products', [ShopkeeperController::class, 'products'])->name('products');
+    Route::get('/products/create', [ShopkeeperController::class, 'createProduct'])->name('products.create');
+    Route::post('/products/store', [ShopkeeperController::class, 'storeProduct'])->name('products.store');
+    Route::get('/products/{id}/edit', [ShopkeeperController::class, 'editProduct'])->name('products.edit');
+    Route::post('/products/update/{id}', [ShopkeeperController::class, 'updateProduct'])->name('products.update');
+    Route::delete('/products/delete/{id}', [ShopkeeperController::class, 'deleteProduct'])->name('products.delete');
+
+    // Deals (ONLY shopkeeper adds)
+    Route::get('/deals', [ShopkeeperController::class, 'deals'])->name('deals');
+    Route::get('/deals/create', [ShopkeeperController::class, 'createDeal'])->name('deals.create');
+    Route::post('/deals/store', [ShopkeeperController::class, 'storeDeal'])->name('deals.store');
+    Route::get('/deals/{id}/edit', [ShopkeeperController::class, 'editDeal'])->name('deals.edit');
+    Route::post('/deals/update/{id}', [ShopkeeperController::class, 'updateDeal'])->name('deals.update');
+    Route::delete('/deals/delete/{id}', [ShopkeeperController::class, 'deleteDeal'])->name('deals.delete');
 });
 
-// -------------------------
-// Admin Routes
-// -------------------------
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    // Approve products & deals
-    Route::get('/admin/products', [AdminController::class, 'products']);
-    Route::post('/admin/products/{id}/approve', [AdminController::class, 'approveProduct']);
-    Route::get('/admin/deals', [AdminController::class, 'deals']);
-    Route::post('/admin/deals/{id}/approve', [AdminController::class, 'approveDeal']);
+/*
+|--------------------------------------------------------------------------
+| ADMIN
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
 
-    // Manage all shops
-    Route::get('/admin/shops', [AdminController::class, 'shops']);
-    Route::get('/admin/shops/create', [AdminController::class, 'createShop']);
-    Route::post('/admin/shops', [AdminController::class, 'storeShop']);
-    Route::get('/admin/shops/{id}/edit', [AdminController::class, 'editShop']);
-    Route::put('/admin/shops/{id}', [AdminController::class, 'updateShop']);
-    Route::delete('/admin/shops/{id}', [AdminController::class, 'deleteShop']);
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    // Manage all products
-    Route::get('/admin/products/all', [AdminController::class, 'allProducts']);
-    Route::get('/admin/products/create', [AdminController::class, 'createProduct']);
-    Route::post('/admin/products', [AdminController::class, 'storeProduct']);
-    Route::get('/admin/products/{id}/edit', [AdminController::class, 'editProduct']);
-    Route::put('/admin/products/{id}', [AdminController::class, 'updateProduct']);
-    Route::delete('/admin/products/{id}', [AdminController::class, 'deleteProduct']);
+    // Users
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
 
-    // Manage users
-    Route::get('/admin/users', [AdminController::class, 'users']);
-    Route::post('/admin/users/{id}/warn', [AdminController::class, 'warnUser']);
-    Route::post('/admin/users/{id}/disable', [AdminController::class, 'disableUser']);
+    // Shops
+    Route::get('/shops', [AdminController::class, 'shops'])->name('shops');
+    Route::post('/shops/{id}/approve', [AdminController::class, 'approveShop'])->name('shops.approve');
+
+    // Products
+    Route::get('/products', [AdminController::class, 'products'])->name('products');
+    Route::post('/products/{id}/approve', [AdminController::class, 'approveProduct'])->name('products.approve');
+
+    // Deals
+    Route::get('/deals', [AdminController::class, 'deals'])->name('deals');
+    Route::post('/deals/{id}/approve', [AdminController::class, 'approveDeal'])->name('deals.approve');
+    Route::delete('/deals/{id}', [AdminController::class, 'deleteDeal'])->name('deals.delete');
+});
+
+/*
+|--------------------------------------------------------------------------
+| PROFILE
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 });

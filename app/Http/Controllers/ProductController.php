@@ -2,41 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Models\Product;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    // Show all products
     public function index()
     {
-        $products = Product::where('approved', true)->get();  // Only approved products
+        $products = Product::latest()->get();
         return view('marketplace.products', compact('products'));
     }
 
-    public function create()
+    // Show single product
+    public function show($id)
     {
-        return view('shopkeeper.create_product');
+        $product = Product::findOrFail($id);
+        return view('marketplace.product_detail', compact('product'));
     }
 
+    // Optional: store method if admin/shopkeeper uses this controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
-            'description' => 'required',
+            'name' => 'required|string|max:255',
             'price' => 'required|numeric',
-            'category' => 'required',
+            'shop_name' => 'required|string|max:255',
+            'image' => 'required|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'description' => 'nullable|string',
         ]);
+
+        $imageName = time().'_'.Str::slug($request->name).'.'.$request->image->extension();
+        $request->image->move(public_path('products'), $imageName);
 
         Product::create([
             'name' => $request->name,
-            'description' => $request->description,
             'price' => $request->price,
-            'category' => $request->category,
-            'user_id' => auth()->id(),
+            'shop_name' => $request->shop_name,
+            'image' => $imageName,
+            'description' => $request->description,
         ]);
 
-        return redirect('/products')->with('status', 'Product submitted for approval!');
+        return redirect()->back()->with('success', 'Product added successfully!');
     }
-
-    // Add other methods (show, edit, update, destroy) as needed
 }
