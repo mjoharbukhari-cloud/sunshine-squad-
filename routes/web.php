@@ -16,6 +16,9 @@ use App\Http\Controllers\Auth\{
     ForgotPasswordController,
     ResetPasswordController
 };
+use App\Models\Product;
+use App\Models\Deal;
+use App\Models\Cart;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,18 +30,15 @@ Route::view('/contact', 'marketplace.contact')->name('contact');
 
 /*
 |--------------------------------------------------------------------------
-| MARKETPLACE (PUBLIC)
+| MARKETPLACE
 |--------------------------------------------------------------------------
 */
-// Products
 Route::get('/products', [ProductController::class, 'index'])->name('marketplace.products');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('marketplace.products.show');
 
-// Deals
 Route::get('/deals', [DealController::class, 'index'])->name('marketplace.deals');
 Route::get('/deals/{id}', [DealController::class, 'show'])->name('marketplace.deals.show');
 
-// Search & Category
 Route::get('/category/{slug}', fn ($slug) =>
     view('marketplace.category', compact('slug'))
 )->name('category.show');
@@ -49,7 +49,7 @@ Route::get('/search', fn () =>
 
 /*
 |--------------------------------------------------------------------------
-| AUTHENTICATION
+| AUTH
 |--------------------------------------------------------------------------
 */
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -82,20 +82,16 @@ Route::middleware('auth')->get('/dashboard', function () {
 | CUSTOMER
 |--------------------------------------------------------------------------
 */
-use App\Models\Product;
-use App\Models\Deal;
-use App\Models\Cart;
-
 Route::middleware(['auth', 'role:customer'])->group(function () {
 
     Route::get('/customer/dashboard', function () {
 
         $products = Product::latest()->take(6)->get();
 
-        $deals = Deal::where('approved',1)
-                    ->latest()
-                    ->take(4)
-                    ->get();
+        $deals = Deal::where('approved', 1)
+            ->latest()
+            ->take(4)
+            ->get();
 
         $cartCount = Cart::where('user_id', auth()->id())->count();
 
@@ -104,20 +100,15 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
             'deals',
             'cartCount'
         ));
-
     })->name('customer.dashboard');
 
-
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-
     Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
-
     Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
 
-    // Buy Now
     Route::post('/buy/{id}', [CartController::class, 'buyNow'])->name('checkout.buy');
-
 });
+
 /*
 |--------------------------------------------------------------------------
 | SHOPKEEPER
@@ -128,58 +119,55 @@ Route::middleware(['auth', 'role:shopkeeper'])
     ->name('shopkeeper.')
     ->group(function () {
 
-    Route::get('/dashboard', [ShopkeeperController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [ShopkeeperController::class, 'dashboard'])->name('dashboard');
 
-    // Shop
-    Route::get('/shop/create', [ShopkeeperController::class, 'createShop'])->name('shop.create');
-    Route::post('/shop/store', [ShopkeeperController::class, 'storeShop'])->name('shop.store');
+        // Products
+        Route::get('/products', [ShopkeeperController::class, 'products'])->name('products');
+        Route::get('/products/create', [ShopkeeperController::class, 'createProduct'])->name('products.create');
+        Route::post('/products/store', [ShopkeeperController::class, 'storeProduct'])->name('products.store');
+        Route::get('/products/{id}/edit', [ShopkeeperController::class, 'editProduct'])->name('products.edit');
+        Route::post('/products/update/{id}', [ShopkeeperController::class, 'updateProduct'])->name('products.update');
+        Route::delete('/products/delete/{id}', [ShopkeeperController::class, 'deleteProduct'])->name('products.delete');
 
-    // Products
-    Route::get('/products', [ShopkeeperController::class, 'products'])->name('products');
-    Route::get('/products/create', [ShopkeeperController::class, 'createProduct'])->name('products.create');
-    Route::post('/products/store', [ShopkeeperController::class, 'storeProduct'])->name('products.store');
-    Route::get('/products/{id}/edit', [ShopkeeperController::class, 'editProduct'])->name('products.edit');
-    Route::post('/products/update/{id}', [ShopkeeperController::class, 'updateProduct'])->name('products.update');
-    Route::delete('/products/delete/{id}', [ShopkeeperController::class, 'deleteProduct'])->name('products.delete');
-
-    // Deals (ONLY shopkeeper adds)
-    Route::get('/deals', [ShopkeeperController::class, 'deals'])->name('deals');
-    Route::get('/deals/create', [ShopkeeperController::class, 'createDeal'])->name('deals.create');
-    Route::post('/deals/store', [ShopkeeperController::class, 'storeDeal'])->name('deals.store');
-    Route::get('/deals/{id}/edit', [ShopkeeperController::class, 'editDeal'])->name('deals.edit');
-    Route::post('/deals/update/{id}', [ShopkeeperController::class, 'updateDeal'])->name('deals.update');
-    Route::delete('/deals/delete/{id}', [ShopkeeperController::class, 'deleteDeal'])->name('deals.delete');
-});
+        // Deals
+        Route::get('/deals', [ShopkeeperController::class, 'deals'])->name('deals');
+        Route::get('/deals/create', [ShopkeeperController::class, 'createDeal'])->name('deals.create');
+        Route::post('/deals/store', [ShopkeeperController::class, 'storeDeal'])->name('deals.store');
+        Route::get('/deals/{id}/edit', [ShopkeeperController::class, 'editDeal'])->name('deals.edit');
+        Route::post('/deals/update/{id}', [ShopkeeperController::class, 'updateDeal'])->name('deals.update');
+        Route::delete('/deals/delete/{id}', [ShopkeeperController::class, 'deleteDeal'])->name('deals.delete');
+    });
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN
+| ADMIN (FIXED 🚨)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
+->prefix('admin')
+->name('admin.')
+->group(function () {
 
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    // Users
     Route::get('/users', [AdminController::class, 'users'])->name('users');
 
-    // Shops
-    Route::get('/shops', [AdminController::class, 'shops'])->name('shops');
-    Route::post('/shops/{id}/approve', [AdminController::class, 'approveShop'])->name('shops.approve');
-
-    // Products
+    // PRODUCTS
     Route::get('/products', [AdminController::class, 'products'])->name('products');
-    Route::post('/products/{id}/approve', [AdminController::class, 'approveProduct'])->name('products.approve');
+    Route::get('/products/create', [AdminController::class, 'createProduct'])->name('products.create');
+    Route::post('/products/store', [AdminController::class, 'storeProduct'])->name('products.store');
+    Route::get('/products/{id}/edit', [AdminController::class, 'editProduct'])->name('products.edit');
+    Route::post('/products/update/{id}', [AdminController::class, 'updateProduct'])->name('products.update');
+    Route::delete('/products/delete/{id}', [AdminController::class, 'deleteProduct'])->name('products.delete');
 
-    // Deals
+    // DEALS (FULL FIX)
     Route::get('/deals', [AdminController::class, 'deals'])->name('deals');
-    Route::post('/deals/{id}/approve', [AdminController::class, 'approveDeal'])->name('deals.approve');
-    Route::delete('/deals/{id}', [AdminController::class, 'deleteDeal'])->name('deals.delete');
+    Route::get('/deals/create', [AdminController::class, 'createDeal'])->name('deals.create');
+    Route::post('/deals/store', [AdminController::class, 'storeDeal'])->name('deals.store');
+    Route::get('/deals/{id}/edit', [AdminController::class, 'editDeal'])->name('deals.edit');
+    Route::post('/deals/update/{id}', [AdminController::class, 'updateDeal'])->name('deals.update');
+    Route::delete('/deals/delete/{id}', [AdminController::class, 'deleteDeal'])->name('deals.delete');
 });
-
 /*
 |--------------------------------------------------------------------------
 | PROFILE

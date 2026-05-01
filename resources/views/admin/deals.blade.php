@@ -8,7 +8,7 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-
+<a href="{{ route('admin.deals.create') }}" class="btn btn-primary mb-3">Add Deal</a>
     {{-- Deals Table --}}
     <div class="card">
         <div class="card-header">

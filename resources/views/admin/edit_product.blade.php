@@ -2,50 +2,32 @@
 
 @section('content')
 <div class="container">
-    <h1>Products</h1>
+    <h1>Edit Product</h1>
 
-    <a href="{{ route('admin.products.create') }}" class="btn btn-primary mb-3">Add New Product</a>
+    <form action="{{ route('admin.products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
+        @csrf
 
-    @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+        <div class="mb-3">
+            <label>Name</label>
+            <input type="text" name="name" value="{{ $product->name }}" class="form-control" required>
+        </div>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Shop</th>
-                <th>Price</th>
-                <th>Approved</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($products as $product)
-            <tr>
-                <td>{{ $product->id }}</td>
-                <td>{{ $product->name }}</td>
-                <td>{{ $product->shop->name ?? 'N/A' }}</td>
-                <td>{{ $product->price }}</td>
-                <td>{{ $product->approved ? 'Yes' : 'No' }}</td>
-                <td>
-                    <a href="{{ route('admin.products.edit', $product->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    @if(!$product->approved)
-                    <form action="{{ route('admin.products.approve', $product->id) }}" method="POST" style="display:inline;">
-                        @csrf
-                        <button class="btn btn-sm btn-success">Approve</button>
-                    </form>
-                    @endif
-                    <form action="{{ route('admin.products.delete', $product->id) }}" method="POST" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this product?')">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+        <div class="mb-3">
+            <label>Price</label>
+            <input type="number" name="price" value="{{ $product->price }}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Description</label>
+            <textarea name="description" class="form-control">{{ $product->description }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label>Image</label>
+            <input type="file" name="image" class="form-control">
+        </div>
+
+        <button class="btn btn-success">Update Product</button>
+    </form>
 </div>
 @endsection

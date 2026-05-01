@@ -13,48 +13,47 @@ class ShopkeeperController extends Controller
     // DASHBOARD
     public function dashboard()
     {
-        // Ensure the shop exists for this shopkeeper
         $shop = Shop::firstOrCreate(
             ['user_id' => auth()->id()],
             [
                 'name' => auth()->user()->name . "'s Shop",
                 'description' => 'Default shop description',
-                'address' => 'Default Address', // Add default for new column
+                'address' => 'Default Address',
                 'approved' => 1,
             ]
         );
 
-        // Get products and deals of this shop
         $products = Product::where('shop_id', $shop->id)->get();
         $deals = Deal::where('shop_id', $shop->id)->get();
 
         return view('dashboard.shopkeeper', compact('shop', 'products', 'deals'));
     }
 
-    // PRODUCTS
+    // ================= PRODUCTS =================
+
     public function products()
     {
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
         $products = Product::where('shop_id', $shop->id)->get();
         return view('shopkeeper.products', compact('products'));
     }
 
     public function createProduct()
     {
-        return view('shopkeeper.product_create'); // Make sure file is: resources/views/shopkeeper/products_create.blade.php
+        return view('shopkeeper.product_create');
     }
 
     public function storeProduct(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required',
             'price' => 'required|numeric',
-            'quantity' => 'required|integer|min:1',
-            'description' => 'required|string',
+            'quantity' => 'required|integer',
+            'description' => 'required',
             'image' => 'nullable|image|max:2048',
         ]);
 
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
 
         $product = new Product();
         $product->shop_id = $shop->id;
@@ -63,95 +62,75 @@ class ShopkeeperController extends Controller
         $product->quantity = $request->quantity;
         $product->description = $request->description;
 
-        // Handle image
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
-            $product->image = $path; // Only path, Blade will handle asset()
-        } else {
-            $product->image = 'product-placeholder.jpg';
+            $product->image = $request->file('image')->store('products', 'public');
         }
 
-        $product->approved = 1; // Show instantly on homepage
+        $product->approved = 1;
         $product->save();
 
-        return redirect()->route('shopkeeper.products')->with('success', 'Product added successfully!');
+        return redirect()->route('shopkeeper.products')->with('success', 'Product added');
     }
 
     public function editProduct($id)
     {
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
         $product = Product::where('shop_id', $shop->id)->findOrFail($id);
-        return view('shopkeeper.products.edit', compact('product'));
+
+        return view('shopkeeper.product_edit', compact('product'));
     }
 
     public function updateProduct(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric',
-            'quantity' => 'required|integer|min:1',
-            'description' => 'required|string',
-            'image' => 'nullable|image|max:2048',
-        ]);
-
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
         $product = Product::where('shop_id', $shop->id)->findOrFail($id);
 
-        $product->name = $request->name;
-        $product->price = $request->price;
-        $product->quantity = $request->quantity;
-        $product->description = $request->description;
+        $product->update($request->only(['name', 'price', 'quantity', 'description']));
 
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($product->image && Storage::disk('public')->exists($product->image)) {
-                Storage::disk('public')->delete($product->image);
-            }
-            $path = $request->file('image')->store('products', 'public');
-            $product->image = $path;
+            if ($product->image) Storage::disk('public')->delete($product->image);
+            $product->image = $request->file('image')->store('products', 'public');
         }
 
         $product->save();
 
-        return redirect()->route('shopkeeper.products')->with('success', 'Product updated successfully!');
+        return redirect()->route('shopkeeper.products')->with('success', 'Updated');
     }
 
     public function deleteProduct($id)
     {
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
         $product = Product::where('shop_id', $shop->id)->findOrFail($id);
 
-        if ($product->image && Storage::disk('public')->exists($product->image)) {
-            Storage::disk('public')->delete($product->image);
-        }
-
+        if ($product->image) Storage::disk('public')->delete($product->image);
         $product->delete();
-        return redirect()->route('shopkeeper.products')->with('success', 'Product deleted successfully!');
+
+        return back()->with('success', 'Deleted');
     }
 
-    // DEALS
+    // ================= DEALS =================
+
     public function deals()
     {
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
         $deals = Deal::where('shop_id', $shop->id)->get();
         return view('shopkeeper.deals', compact('deals'));
     }
 
     public function createDeal()
     {
-        return view('shopkeeper.deals.create'); // Make sure file exists
+        return view('shopkeeper.deal_create');
     }
 
     public function storeDeal(Request $request)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'required',
             'price' => 'required|numeric',
-            'description' => 'required|string',
-            'image' => 'nullable|image|max:2048',
+            'description' => 'required',
         ]);
 
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
 
         $deal = new Deal();
         $deal->shop_id = $shop->id;
@@ -159,66 +138,49 @@ class ShopkeeperController extends Controller
         $deal->price = $request->price;
         $deal->description = $request->description;
 
-        // Handle image
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('deals', 'public');
-            $deal->image = $path;
-        } else {
-            $deal->image = 'deal-placeholder.jpg';
+            $deal->image = $request->file('image')->store('deals', 'public');
         }
 
-        $deal->approved = 1; // Show instantly on homepage
+        $deal->approved = 1;
         $deal->save();
 
-        return redirect()->route('shopkeeper.deals')->with('success', 'Deal added successfully!');
+        return redirect()->route('shopkeeper.deals')->with('success', 'Deal added');
     }
 
     public function editDeal($id)
     {
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
         $deal = Deal::where('shop_id', $shop->id)->findOrFail($id);
+
         return view('shopkeeper.deal_edit', compact('deal'));
     }
 
     public function updateDeal(Request $request, $id)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'price' => 'required|numeric',
-            'description' => 'required|string',
-            'image' => 'nullable|image|max:2048',
-        ]);
-
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
         $deal = Deal::where('shop_id', $shop->id)->findOrFail($id);
 
-        $deal->title = $request->title;
-        $deal->price = $request->price;
-        $deal->description = $request->description;
+        $deal->update($request->only(['title', 'price', 'description']));
 
         if ($request->hasFile('image')) {
-            if ($deal->image && Storage::disk('public')->exists($deal->image)) {
-                Storage::disk('public')->delete($deal->image);
-            }
-            $path = $request->file('image')->store('deals', 'public');
-            $deal->image = $path;
+            if ($deal->image) Storage::disk('public')->delete($deal->image);
+            $deal->image = $request->file('image')->store('deals', 'public');
         }
 
         $deal->save();
 
-        return redirect()->route('shopkeeper.deals')->with('success', 'Deal updated successfully!');
+        return redirect()->route('shopkeeper.deals')->with('success', 'Updated');
     }
 
     public function deleteDeal($id)
     {
-        $shop = Shop::where('user_id', auth()->id())->first();
+        $shop = Shop::where('user_id', auth()->id())->firstOrFail();
         $deal = Deal::where('shop_id', $shop->id)->findOrFail($id);
 
-        if ($deal->image && Storage::disk('public')->exists($deal->image)) {
-            Storage::disk('public')->delete($deal->image);
-        }
-
+        if ($deal->image) Storage::disk('public')->delete($deal->image);
         $deal->delete();
-        return redirect()->route('shopkeeper.deals')->with('success', 'Deal deleted successfully!');
+
+        return back()->with('success', 'Deleted');
     }
 }

@@ -4,7 +4,7 @@
 <div class="container">
     <h1>Products</h1>
 
-    <a href="{{ route('admin.products.create') }}" class="btn btn-primary mb-3">Add New Product</a>
+    <a href="{{ route('admin.products') }}" class="btn btn-primary mb-3">Add New Product</a>
 
     @if(session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>
