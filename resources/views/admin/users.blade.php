@@ -26,8 +26,7 @@
                 <td>{{ $user->email }}</td>
                 <td>{{ $user->role }}</td>
                 <td>
-                    {{-- Optionally, add role change or delete --}}
-                </td>
+                    </td>
             </tr>
             @endforeach
         </tbody>

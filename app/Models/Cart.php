@@ -9,26 +9,41 @@ class Cart extends Model
 {
     use HasFactory;
 
-    // Mass assignable fields
+    /**
+     * Point exactly to the plural table name built by your migration 🎯
+     */
+    protected $table = 'carts';
+
+    /**
+     * The attributes that are mass assignable.
+     * Added 'deal_id' to allow saving deals to the cart.
+     */
     protected $fillable = [
         'user_id',
         'product_id',
+        'deal_id', // <--- Added this to fix the column not found/mass assignment error
         'quantity',
     ];
 
-    /**
-     * The user who owns this cart item
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
     /**
-     * The product associated with this cart item
+     * Relationship: A cart item can belong to a Product.
      */
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Relationship: A cart item can belong to a Deal.
+     * This allows your system to identify deals in the cart.
+     */
+    public function deal()
+    {
+        return $this->belongsTo(Deal::class);
     }
 }

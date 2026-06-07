@@ -8,27 +8,45 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
+    {{-- Error Alert block to catch input bugs immediately --}}
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         <div class="mb-3">
             <label for="name" class="form-label">Product Name</label>
-            <input type="text" name="name" id="name" class="form-control" required placeholder="Enter product name">
+            <input type="text" name="name" id="name" class="form-control" value="{{ old('name') }}" required placeholder="Enter product name">
         </div>
 
         <div class="mb-3">
             <label for="description" class="form-label">Description</label>
-            <textarea name="description" id="description" class="form-control" rows="3" placeholder="Enter product description"></textarea>
+            <textarea name="description" id="description" class="form-control" rows="3" placeholder="Enter product description">{{ old('description') }}</textarea>
         </div>
 
         <div class="mb-3">
             <label for="price" class="form-label">Price</label>
-            <input type="number" step="0.01" name="price" id="price" class="form-control" required placeholder="Enter product price">
+            <input type="number" step="0.01" name="price" id="price" class="form-control" value="{{ old('price') }}" required placeholder="Enter product price">
         </div>
 
         <div class="mb-3">
-            <label for="shop_name" class="form-label">Shop Name</label>
-            <input type="text" name="shop_name" id="shop_name" class="form-control" placeholder="Enter shop name or leave as Admin">
+            <label for="shop_id" class="form-label">Assign to Shop / Vendor</label>
+            <select name="shop_id" id="shop_id" class="form-control" required>
+                <option value="">-- Select Active Shop Entity --</option>
+                @foreach($shops as $shop)
+                    <option value="{{ $shop->id }}" {{ old('shop_id') == $shop->id ? 'selected' : '' }}>
+                        {{ $shop->name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
 
         <div class="mb-3">

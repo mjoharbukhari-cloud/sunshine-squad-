@@ -16,8 +16,8 @@
         </div>
 
         <div class="mb-3">
-            <label>Location</label>
-            <input type="text" name="location" class="form-control" required>
+            <label>Address</label>
+            <input type="text" name="address" class="form-control" required>
         </div>
 
         <div class="mb-3">

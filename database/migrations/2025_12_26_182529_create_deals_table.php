@@ -10,10 +10,10 @@ return new class extends Migration {
        Schema::create('deals', function (Blueprint $table) {
     $table->id();
     $table->string('title');
-    $table->decimal('deal_price', 10, 2);
-    $table->integer('quantity');
-    $table->string('image');
     $table->text('description');
+    $table->decimal('price', 10, 2);
+    $table->string('image')->nullable();
+    $table->boolean('approved')->default(0); // Add this line right here! 
     $table->timestamps();
 });
 

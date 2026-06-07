@@ -25,8 +25,8 @@
             <h5 class="card-title">Product {{$i}}</h5>
             <p class="card-text">Category item description.</p>
             <div class="d-flex gap-2">
-              <a href="/buy/{{$i}}" class="btn btn-gold btn-sm">Buy Now</a>
-              <a href="/products" class="btn btn-outline-light btn-sm">Details</a>
+              <a href="{{ route('marketplace.products') }}" class="btn btn-warning btn-sm text-dark fw-bold">Buy Now</a>
+              <a href="{{ route('marketplace.products') }}" class="btn btn-outline-light btn-sm">Details</a>
             </div>
           </div>
         </div>

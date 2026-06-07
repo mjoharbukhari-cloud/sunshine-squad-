@@ -5,34 +5,28 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\Deal;
 use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-
-    /*
-    |--------------------------------------------------------------------------
-    | Show Cart Page
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * Show Cart Page
+     */
     public function index()
     {
-        $cartItems = Cart::with('product')
+        // Fetch cart items with both relationships
+        $cartItems = Cart::with(['product', 'deal'])
             ->where('user_id', Auth::id())
             ->get();
 
         return view('cart.index', compact('cartItems'));
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Add Product To Cart
-    |--------------------------------------------------------------------------
-    */
-
-    public function add($id)
+    /**
+     * Add Product to Cart
+     */
+    public function addProduct($id)
     {
         $product = Product::findOrFail($id);
 
@@ -40,32 +34,46 @@ class CartController extends Controller
             ->where('product_id', $id)
             ->first();
 
-        // If product already in cart increase quantity
         if ($cart) {
-
-            $cart->quantity += 1;
-            $cart->save();
-
+            $cart->increment('quantity');
         } else {
-
             Cart::create([
-                'user_id' => Auth::id(),
+                'user_id'    => Auth::id(),
                 'product_id' => $id,
-                'quantity' => 1
+                'quantity'   => 1
             ]);
-
         }
 
-        return redirect()->back()->with('success', 'Product added to cart!');
+        return redirect()->back()->with('success', $product->name . ' added to cart!');
     }
 
+    /**
+     * Add Deal (Bundle) to Cart
+     */
+    public function addDeal($id)
+    {
+        $deal = Deal::findOrFail($id);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Remove Product From Cart
-    |--------------------------------------------------------------------------
-    */
+        $cart = Cart::where('user_id', Auth::id())
+            ->where('deal_id', $id)
+            ->first();
 
+        if ($cart) {
+            $cart->increment('quantity');
+        } else {
+            Cart::create([
+                'user_id'  => Auth::id(),
+                'deal_id'  => $id,
+                'quantity' => 1
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Deal "' . $deal->title . '" added to cart!');
+    }
+
+    /**
+     * Remove Item From Cart
+     */
     public function remove($id)
     {
         $item = Cart::where('user_id', Auth::id())
@@ -77,19 +85,20 @@ class CartController extends Controller
         return redirect()->back()->with('success', 'Item removed from cart.');
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Buy Now (Simple Checkout)
-    |--------------------------------------------------------------------------
-    */
-
-    public function buyNow($id)
+    /**
+     * Checkout Logic (Supports both)
+     */
+    public function buyNow(Request $request, $id, $type = 'product')
     {
-        $product = Product::findOrFail($id);
+        if ($type === 'deal') {
+            $item = Deal::findOrFail($id);
+            $message = 'Proceeding to checkout for deal: ' . $item->title;
+        } else {
+            $item = Product::findOrFail($id);
+            $message = 'Proceeding to checkout for product: ' . $item->name;
+        }
 
         return redirect()->route('cart.index')
-            ->with('success', 'Proceeding to checkout for: '.$product->name);
+            ->with('success', $message);
     }
-
 }

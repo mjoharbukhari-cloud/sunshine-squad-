@@ -8,21 +8,33 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    // Show all products
+    // Show all products with pagination and eager-loaded reviews
     public function index()
     {
-        $products = Product::latest()->get();
+        // Paginate by 12, eager-loading reviews for the offcanvas
+        $products = Product::with('reviews')->latest()->paginate(18);
+        
         return view('marketplace.products', compact('products'));
     }
 
-    // Show single product
+    // Show single product with Related Item Recommendation Logic
     public function show($id)
     {
-        $product = Product::findOrFail($id);
-        return view('marketplace.product_detail', compact('product'));
+        $product = Product::with('reviews')->findOrFail($id);
+
+        // Fetch related products based on similar description or name
+        $relatedProducts = Product::where('id', '!=', $id)
+            ->where(function($query) use ($product) {
+                $query->where('name', 'LIKE', '%' . $product->name . '%')
+                      ->orWhere('description', 'LIKE', '%' . ($product->description ?? 'none') . '%');
+            })
+            ->limit(6)
+            ->get();
+
+        return view('marketplace.product_detail', compact('product', 'relatedProducts'));
     }
 
-    // Optional: store method if admin/shopkeeper uses this controller
+    // Store method
     public function store(Request $request)
     {
         $request->validate([
@@ -33,14 +45,14 @@ class ProductController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $imageName = time().'_'.Str::slug($request->name).'.'.$request->image->extension();
-        $request->image->move(public_path('products'), $imageName);
+        // Standard storage path
+        $imagePath = $request->file('image')->store('products', 'public');
 
         Product::create([
             'name' => $request->name,
             'price' => $request->price,
             'shop_name' => $request->shop_name,
-            'image' => $imageName,
+            'image' => $imagePath,
             'description' => $request->description,
         ]);
 

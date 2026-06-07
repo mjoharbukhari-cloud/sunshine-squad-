@@ -13,22 +13,40 @@ class Shop extends Model
         'name',
         'description',
         'address',
-        'user_id'
+        'user_id',
+        'approved' // Added for admin shop verification/approval workflows
     ];
 
-    // SHOP OWNER
+    /**
+     * Get the owner of the shop.
+     * * Explicitly pointing 'user_id' as the foreign key because 
+     * the method name 'owner' differs from the standard 'user' naming convention.
+     */
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // SHOP PRODUCTS
+    /**
+     * Standard user relationship alias.
+     * Useful for built-in Laravel shortcuts and background checks.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get all products associated with this marketplace shop.
+     */
     public function products()
     {
         return $this->hasMany(Product::class);
     }
 
-    // SHOP DEALS
+    /**
+     * Get all bundled marketing deals/packages created by this shop.
+     */
     public function deals()
     {
         return $this->hasMany(Deal::class);

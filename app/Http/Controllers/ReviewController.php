@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Review;
+use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
     public function __construct()
     {
-        // Only logged-in users can review
         $this->middleware('auth');
     }
 
@@ -18,6 +18,7 @@ class ReviewController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. Validate the request
         $request->validate([
             'reviewable_id' => 'required|integer',
             'reviewable_type' => 'required|string',
@@ -25,14 +26,16 @@ class ReviewController extends Controller
             'comment' => 'required|string|max:1000',
         ]);
 
+        // 2. Create the review
         Review::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'reviewable_id' => $request->reviewable_id,
             'reviewable_type' => $request->reviewable_type,
             'rating' => $request->rating,
             'comment' => $request->comment,
         ]);
 
-        return redirect()->back()->with('success', 'Review submitted successfully');
+        // 3. Return to the previous page
+        return redirect()->back()->with('success', 'Review submitted successfully!');
     }
 }

@@ -4,12 +4,11 @@
 <div class="container mt-4">
     <h1 class="mb-4">Deals Management</h1>
 
-    {{-- Success Message --}}
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-<a href="{{ route('admin.deals.create') }}" class="btn btn-primary mb-3">Add Deal</a>
-    {{-- Deals Table --}}
+    <a href="{{ route('admin.deals.create') }}" class="btn btn-primary mb-3">Add Deal</a>
+    
     <div class="card">
         <div class="card-header">
             All Deals
@@ -34,7 +33,7 @@
                             <td>{{ $deal->id }}</td>
                             <td>{{ $deal->title }}</td>
                             <td>{{ $deal->description }}</td>
-                            <td>{{ $deal->shop_name ?? 'Admin' }}</td>
+                            <td>{{ $deal->shop->name ?? 'Admin' }}</td>
                             <td>
                                 @if($deal->image)
                                     <img src="{{ asset('storage/'.$deal->image) }}" alt="Deal Image" width="60">
