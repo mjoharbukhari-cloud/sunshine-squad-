@@ -22,7 +22,7 @@ class HomeController extends Controller
             ->paginate(24);
 
         $deals = Deal::orderBy('created_at', 'desc')
-            ->take(6)
+            ->take(4)
             ->get();
 
         return view('marketplace.home', compact('products', 'deals'));

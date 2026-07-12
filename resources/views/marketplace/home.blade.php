@@ -306,10 +306,6 @@
     @endforeach
 </div>
 
-< <div class="text-center mt-3 mb-5">
-    <button id="showMoreProducts" class="btn btn-warning">Show More Products</button>
-    <button id="showLessProducts" class="btn btn-secondary d-none">Show Less Products</button>
-</div> 
 <div class="d-flex justify-content-center mt-5">
     {{ $products->links('pagination::bootstrap-5') }}
 </div>
@@ -322,38 +318,7 @@ function guestRedirect() {
     window.location.href = "{{ route('login') }}";
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const productContainer = document.getElementById('productContainer');
-    const showMoreBtn = document.getElementById('showMoreProducts');
-    const showLessBtn = document.getElementById('showLessProducts');
-    const allProducts = Array.from(productContainer.children);
 
-    const initialVisible = 8;
-    let currentVisible = initialVisible;
 
-    showMoreBtn.addEventListener('click', function() {
-        currentVisible += 8;
-        allProducts.forEach((el, i) => {
-            el.style.display = i < currentVisible ? 'block' : 'none';
-        });
-        if(currentVisible >= allProducts.length){
-            showMoreBtn.classList.add('d-none');
-        }
-        showLessBtn.classList.remove('d-none');
-    });
-
-    showLessBtn.addEventListener('click', function() {
-        currentVisible -= 8;
-        if(currentVisible < initialVisible) currentVisible = initialVisible;
-        allProducts.forEach((el, i) => {
-            el.style.display = i < currentVisible ? 'block' : 'none';
-        });
-        showMoreBtn.toggleAttribute;
-        showMoreBtn.classList.remove('d-none');
-        if(currentVisible === initialVisible){
-            showLessBtn.classList.add('d-none');
-        }
-    });
-});
 </script>
 @endsection
